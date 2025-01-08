@@ -4,7 +4,7 @@
 lw $a0, $zero, $imm1, $zero, 0x100, 0  # Load radius
 mac $s0, $a0, $a0, $zero, 0, 0 # calculate r^2
 add $s1, $zero, $imm1, $zero, 128, 0  # Center line and offset
-mac $a2, $imm1, $imm1, $imm2, 100, 10000 # set margin for drawing
+mac $a2, $imm1, $imm1, $imm2, 100, 10001 # set margin for drawing
 
 add $t0, $zero, $zero, $zero, 0, 0 # set i = 0
 
