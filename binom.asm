@@ -25,8 +25,8 @@ bin:
 add $sp, $sp, $imm2, $zero, 0, -4		# adjust stack for 4 items
 sw $zero, $sp, $imm2, $s0, 0, 3			# save $s0
 sw $zero, $sp, $imm2, $ra, 0, 2			# save return address
-sw $zero, $sp, $imm2, $a0, 0, 1
-sw $zero, $sp, $imm2, $a1, 0, 0
+sw $zero, $sp, $imm2, $a0, 0, 1         # save n
+sw $zero, $sp, $imm2, $a1, 0, 0         # save k  
 bne $zero, $a1, $zero, $imm1, L1, 0 #base conditions
 bne $zero, $a1, $a0, $imm1, L1, 0
 add $v0, $zero, $imm1, $zero, 1, 0  # Return 1
@@ -38,8 +38,8 @@ sub $a0, $a0, $imm1, $zero, 1, 0  # n-1 # Call binom(n-1, k-1)
 sub $a1, $a1, $imm1, $zero, 1, 0  # k-1
 jal $ra, $zero, $zero, $imm1, bin, 0
 add $s0, $v0, $imm2, $zero, 0, 0 # $s0 = binom(n-1, k-1)
-lw $a0, $sp, $imm2, $zero, 0, 0 #restore $a0 = n
-lw $a1, $sp, $imm2, $zero, 0, 1 #restore $a1 = k
+lw $a0, $sp, $imm2, $zero, 0, 1 #restore $a0 = n
+lw $a1, $sp, $imm2, $zero, 0, 0 #restore $a1 = k
 sub $a0, $a0, $imm1, $zero, 1, 0
 jal $ra, $zero, $zero, $imm1, bin, 0
 add $v0, $v0, $s0, $zero, 0, 0
