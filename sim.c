@@ -63,15 +63,15 @@ int disk_timer = 0;
 int disk_timer_enable = 0;
 
 // declare functions
-long long int hexToNum(char number[], int bits); // should be signed or unsigned?
+long long int hexToNum(char number[], int bits); 
 int write_file_contents_into_array(char* input_file_name, char** array, int max_lines, int max_line_length);
 int write_integers_into_array(char* input_file_name, int* array, int max_lines);
 long long int* createLongArrayFromFile (char* input_file_name, int max_lines, int max_line_length, int bits);
 void decode_instruction(long long int ins, struct instruction *curr);
 void setImmediates(struct instruction *ins);
-int execute(struct instruction *ins, long long int *data_memory, long long int *disk_in, FILE* hwtrace, FILE* leds, FILE* disp7seg);
-int countLinesToPrint (long long int *array, int max_size);
+int countLinesToPrint(long long int *array, int max_size);
 int countPixelsToPrint();
+int execute(struct instruction *ins, long long int *data_memory, long long int *disk_in, FILE* hwtrace, FILE* leds, FILE* disp7seg);
 
 int main(int argc, char *argv[]) {
     
@@ -160,7 +160,6 @@ int main(int argc, char *argv[]) {
         }
         
         //increment timers 
-        //!before or after execution?
         if (disk_timer_enable) {disk_timer++;} 
         if (IOregisters[11]) {IOregisters[12]++;}
         
