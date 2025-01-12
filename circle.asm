@@ -1,5 +1,5 @@
 # set radius
-.word 0x100 100
+.word 0x100 103
 # Load radius
 lw $a0, $zero, $imm1, $zero, 0x100, 0  # Load radius
 mac $s0, $a0, $a0, $zero, 0, 0 # calculate r^2
@@ -16,8 +16,8 @@ loop_i:
         beq $zero, $t1, $imm1, $imm2, 256, incr_i # 6
         sub $a0, $t0, $s1, $zero, 0, 0          # calculate dist_x 
         mac $a0, $a0, $a0, $zero, 0, 0          # calculate dist_x^2
-        sub $a1, $t1, $s1, $zero, 0, 0          # calculate dist_x 
-        mac $a1, $a1, $a1, $zero, 0, 0          # calculate dist_x^2
+        sub $a1, $t1, $s1, $zero, 0, 0          # calculate dist_y 
+        mac $a1, $a1, $a1, $zero, 0, 0          # calculate dist_y^2
         sub $v0, $s0, $a0, $a1, 0, 0            # calculate r^2 - x^2 - y^2
         mac $v0, $v0, $v0, $zero, 0, 0          # calculate (r^2 - x^2 - y^2)^2
         blt $zero, $v0, $a2, $imm2, 0, draw   # if (r^2 - x^2 - y^2)^2 < margin (5?) - draw white pixel
