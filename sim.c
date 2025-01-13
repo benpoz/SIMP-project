@@ -399,13 +399,13 @@ int execute(struct instruction *ins, long long int *data_memory, long long int *
                         
                         if (IOregisters[14] == 1) { // read from disk
                             disk_timer_enable = 1; // start counting disk operation time
-                            for (int i = 0; i < (512 / sizeof(int)); i++) { // transfer 512 bytes fo data
+                            for (int i = 0; i < 128; i++) { // transfer 512 bytes fo data
                                 data_memory[buffer + i] = disk_in[128*sector + i]; // this is the DMA
                             }
                         }
                         else if (IOregisters[14] == 2) { // write to disk
                             disk_timer_enable = 1; // start counting disk operation time
-                            for (int i = 0; i < (512 / sizeof(int)); i++) { // transfer 512 bytes fo data
+                            for (int i = 0; i < 128; i++) { // transfer 512 bytes fo data
                                 disk_in[128*sector + i] = data_memory[buffer + i]; // this is the DMA
                             }
                         }
