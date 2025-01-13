@@ -5,7 +5,7 @@
 // define file sizes
 #define MEMORY_SIZE 4096        // Maximum number of lines in the memory
 #define LINE_LENGTH 14          // Each line can hold 12 characters + 2 for newline
-#define DISK_SIZE 128*512       // 64KB        
+#define DISK_SIZE 128*128       // number of ints for 64KB        
 
 // create program counter & clock
 unsigned int CLK = 0; 
@@ -399,13 +399,13 @@ int execute(struct instruction *ins, long long int *data_memory, long long int *
                         
                         if (IOregisters[14] == 1) { // read from disk
                             disk_timer_enable = 1; // start counting disk operation time
-                            for (int i = 0; i < (512 / sizeof(long long int)); i++) { // transfer 512 bytes fo data
+                            for (int i = 0; i < (512 / sizeof(int)); i++) { // transfer 512 bytes fo data
                                 data_memory[buffer + i] = disk_in[128*sector + i]; // this is the DMA
                             }
                         }
                         else if (IOregisters[14] == 2) { // write to disk
                             disk_timer_enable = 1; // start counting disk operation time
-                            for (int i = 0; i < (512 / sizeof(long long int)); i++) { // transfer 512 bytes fo data
+                            for (int i = 0; i < (512 / sizeof(int)); i++) { // transfer 512 bytes fo data
                                 disk_in[128*sector + i] = data_memory[buffer + i]; // this is the DMA
                             }
                         }
