@@ -7,14 +7,6 @@
 #define LINE_LENGTH 14          // Each line can hold 12 characters + 2 for newline
 #define DISK_SIZE 128*128       // number of ints for 64KB        
 
-// create program counter & clock
-unsigned int CLK = 0; 
-unsigned int PC = 0;
-
-// branch/jal & ISR indicators
-int branch = 0;
-int ISR = 0; 
-
 // create registers
 int registers[16] = {0}; // set all to zero
 
@@ -58,16 +50,24 @@ struct instruction {
     int imm2;
 };
 
+// create program counter & clock
+unsigned int CLK = 0; 
+unsigned int PC = 0;
+
+// branch/jal & ISR indicators
+int branch = 0;
+int ISR = 0; 
+
 // disk operation counter
-int disk_timer = 0;
+unsigned int disk_timer = 0;
 int disk_timer_enable = 0;
 
 // declare functions
 long long int hexToNum(char number[], int bits); 
-int write_file_contents_into_array(char* input_file_name, char** array, int max_lines, int max_line_length);
-int write_integers_into_array(char* input_file_name, int* array, int max_lines);
+int writeFileContentsIntoArray(char* input_file_name, char** array, int max_lines, int max_line_length);
+int writeIntegersIntoArray(char* input_file_name, int* array, int max_lines);
 long long int* createLongArrayFromFile (char* input_file_name, int max_lines, int max_line_length, int bits);
-void decode_instruction(long long int ins, struct instruction *curr);
+void decodeInstruction(long long int ins, struct instruction *curr);
 void setImmediates(struct instruction *ins);
 int countLinesToPrint(long long int *array, int max_size);
 int countPixelsToPrint();
@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
     long long int* disk_in = createLongArrayFromFile(argv[3], DISK_SIZE, LINE_LENGTH, 32);
     //interrupt2
     int irq2_in[MEMORY_SIZE];
-    int times_interrupted = write_integers_into_array(argv[4], irq2_in, MEMORY_SIZE);
+    int times_interrupted = writeIntegersIntoArray(argv[4], irq2_in, MEMORY_SIZE);
     int* next_irq2 = irq2_in;
     //outputs
     FILE* memory_out = fopen(argv[5], "w");
@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
         
         //prepare instruction for execution
         struct instruction *current_instruction = malloc(sizeof(struct instruction));
-        decode_instruction(instruction_memory[PC], current_instruction);
+        decodeInstruction(instruction_memory[PC], current_instruction);
         setImmediates(current_instruction);
         free(current_instruction);
         
@@ -243,7 +243,7 @@ long long int hexToNum(char number[], int bits) {
     return res;
 }
 
-int write_file_contents_into_array(char* input_file_name, char** array, int max_lines, int max_line_length) {
+int writeFileContentsIntoArray(char* input_file_name, char** array, int max_lines, int max_line_length) {
     FILE *file = fopen(input_file_name, "r");
     if (!file) {
         printf("Error opening file %s\n", input_file_name);
@@ -260,7 +260,7 @@ int write_file_contents_into_array(char* input_file_name, char** array, int max_
     return line_count;
 }
 
-int write_integers_into_array(char* input_file_name, int* array, int max_lines) {
+int writeIntegersIntoArray(char* input_file_name, int* array, int max_lines) {
     FILE *file = fopen(input_file_name, "r");
     if (!file) {
         printf("Error opening file %s\n", input_file_name);
@@ -276,7 +276,7 @@ int write_integers_into_array(char* input_file_name, int* array, int max_lines) 
     return line_count;
 }
 
-void decode_instruction(long long int ins, struct instruction *curr) {
+void decodeInstruction(long long int ins, struct instruction *curr) {
     curr->op_code = (ins >> 40) & 0xff;
     curr->Rd = (ins >> 36) & 0xf;
     curr->Rs = (ins >> 32) & 0xf;
@@ -442,7 +442,7 @@ int execute(struct instruction *ins, long long int *data_memory, long long int *
 
 long long int* createLongArrayFromFile(char* input_file_name, int max_lines, int max_line_length, int bits) {
     char* file_text[max_lines];
-    int line_count = write_file_contents_into_array(input_file_name, file_text, max_lines, max_line_length);
+    int line_count = writeFileContentsIntoArray(input_file_name, file_text, max_lines, max_line_length);
     long long int* arr = malloc(max_lines * sizeof(long long int));
 
     for (int i = 0; i < line_count; i++) {
