@@ -1,51 +1,25 @@
 # Move contents of first 8 sectors one sector forward
 
-# Enable interrupts
-out $zero, $zero, $imm2, $imm1, 1, 0  # Enable irq0
-out $zero, $zero, $imm2, $imm1, 1, 1  # Enable irq1
-out $zero, $zero, $imm2, $imm1, 1, 2  # Enable irq2
-
-# Set interrupt handler
-sll $sp, $imm1, $imm2, $zero, 1, 11  # Set $sp=1<<11=2048
-out $zero, $imm1, $zero, $imm2, 6, irq_handler
-
 # Initialize disk command registers
-li $t0, 0  # Sector 0
-li $t1, 1  # Sector 1
-li $t2, 8  # Sector 8
+add $a0, $zero, $zero, $imm1, 7 , 0                     # Set $a0=7
+out $zero, $imm1, $zero, $imm2, 16 , 100                # Set buffer address
+Loop_Read:
+    blt $zero, $a0,$zero,imm1, end, 0                   # if $a0<0 end loop
+    in $a1, $imm1, $zero, $zero, 17, 0                  # Read status
+    beq $zero, $a1, $imm1, $imm2, 1, Loop_Read          # Wait until not busy
+    out $zero, $imm1, $zero, $a0, 15, 1                 # set sector index as $a0  
+    out $zero, $imm1, $zero, $imm2, 14, 1               # set disk to read mode
+    add $t0, $a0, $zero, $imm1, 1, 0                    # Set $t0= $a0 +1
+Loop_write:
+    in $a1, $imm1, $zero, $zero, 17, 0                  # Read status
+    beq $zero, $a1, $imm1, $imm2, 1, Loop_write         # Wait until not busy
+    out $zero, $imm1, $zero, $t0, 15, 1                 # set sector index as $a0+1  
+    out $zero, $imm1, $zero, $imm2, 14, 2               # set disk to write mode
+    sub $a0, $a0, $zero, $imm1, 1, 0                    # a0--
+    beq $zero, $zero, $zero, $imm1, Loop_Read, 0        # return to read_loop
 
-move_sectors:
-    beq $t0, $t2, end_disk
-
-    # Read sector t0
-    add $a0, $t0, $zero, $zero, 0, 0
-    out $a0, $zero, 0, $zero, 1, 14  # Disk read command
-
-    # Wait for disk to be ready
-    in $a1, $zero, 0, $zero, 0, 17
-    beq $a1, $zero, move_sectors
-
-    # Write to sector t1
-    add $a0, $t1, $zero, $zero, 0, 0
-    out $a0, $zero, 0, $zero, 2, 14  # Disk write command
-
-    # Increment sectors
-    add $t0, $t0, $imm1, $zero, 1, 0
-    add $t1, $t1, $imm1, $zero, 1, 0
-    beq $zero, $zero, $zero, $imm1, move_sectors, 0
-
-end_disk:
-halt $zero, $zero, $zero, $zero, 0, 0
-
-irq_handler:
-    # Handle interrupts
-    in $t1, $zero, $imm2, $zero, 0, 3  # Read irq0status
-    in $t2, $zero, $imm2, $zero, 0, 4  # Read irq1status
-    in $t3, $zero, $imm2, $zero, 0, 5  # Read irq2status
-
-    # Clear interrupt statuses
-    out $zero, $zero, $imm2, $zero, 0, 3
-    out $zero, $zero, $imm2, $zero, 0, 4
-    out $zero, $zero, $imm2, $zero, 0, 5
-
-    reti $zero, $zero, $zero, $zero, 0, 0
+end:
+    in $a1, $imm1, $zero, $zero, 17, 0                  # Read status
+    beq $zero, $a1, $imm1, $imm2, 1, end                # Wait until not busy
+    out $zero, $imm1, $zero, $imm2, 14, 0               # set disk to write mode
+    halt $zero ,$zero ,$zero ,$zero , 0, 0              # finish
