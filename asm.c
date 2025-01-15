@@ -125,13 +125,13 @@ void first_pass(FILE* input) {
 
     while (fgets(line, sizeof(line), input)) {
         char line_copy[MAX_LINE_LENGTH];
-        strcpy(line_copy, line);  // Make a copy of the line
+        strcpy(line_copy, line);  // Make a copy of the line because strtok modifies the string
 
         char* token = strtok(line, " \t\n");
         if (token == NULL || token[0] == '#') continue;// Ignore comments and empty lines
 
         if (strcmp(token, ".word") == 0) {
-            handle_data_directive(line_copy);  // Use the copy for .word processing// Process .word directive 
+            handle_data_directive(line_copy);  // Use the copy for .word processing
         } else if (token[strlen(token) - 1] == ':') {
             token[strlen(token) - 1] = '\0';// Remove colon from label
             add_label(token, current_address);// Add label with its address
@@ -145,7 +145,7 @@ void first_pass(FILE* input) {
 // Second pass to translate assembly code to machine code
 void second_pass(FILE* input, FILE* imemin, FILE* dmemin) {
     char line[MAX_LINE_LENGTH];
-    char instruction[13];// ?
+    char instruction[13];// 12-character instruction string
     rewind(input);// Reset file pointer to the beginning
 
     while (fgets(line, sizeof(line), input)) {
@@ -175,7 +175,7 @@ void second_pass(FILE* input, FILE* imemin, FILE* dmemin) {
             if (isdigit(token[0]) || token[0] == '-') {
                 imm1 = (token[0] == '0' && token[1] == 'x') ? strtol(token, NULL, 16) : atoi(token);// Immediate value 1
             } else {
-                int label_address = get_label_address(token);// Get address of label?
+                int label_address = get_label_address(token);
                 if (label_address == -1) {
                     printf("Error: Undefined label %s\n", token);
                     exit(1);
@@ -191,19 +191,19 @@ void second_pass(FILE* input, FILE* imemin, FILE* dmemin) {
             } else {
                 int label_address = get_label_address(token);
                 if (label_address == -1) {
-                    printf("Error: Undefined label %s\n", token);// Get address of label?
+                    printf("Error: Undefined label %s\n", token);
                     exit(1);
                 }
                 imm2 = label_address;
             }
         }
-        // Format the instruction as a 12-character string?
+        // Format the instruction string and write to imemin
         sprintf(instruction, "%02X%01X%01X%01X%01X%03X%03X", 
-                opcode, rd, rs, rt, rm, imm1 & 0xFFF, imm2 & 0xFFF);
+                opcode, rd, rs, rt, rm, imm1 & 0xFFF, imm2 & 0xFFF); //imm values might be negative so we need to mask them
         fprintf(imemin, "%s\n", instruction);
     }
 
-    // Write to dmemin up to highest_address// Write data memory to dmemin
+    // Write data memory to dmemin up to highest_address
     for (int i = 0; i <= highest_address; i++) {
         fprintf(dmemin, "%08X\n", data_memory[i]);
     }
