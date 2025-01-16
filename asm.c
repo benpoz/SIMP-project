@@ -5,9 +5,9 @@
 #include <ctype.h>
 
 // Definitions for limits and sizes used in the assembler
-#define MAX_LINE_LENGTH 1000
+#define MAX_LINE_LENGTH 500
 #define MAX_LABEL_LENGTH 50
-#define MAX_LABELS 1000
+#define MAX_LABELS 500
 #define INSTRUCTION_SIZE 4096
 #define DATA_SIZE 4096
 
@@ -21,9 +21,7 @@ typedef struct {
 Label labels[MAX_LABELS];
 int label_count = 0;
 
-// Arrays and counters for instructions and data memory
-char* instructions[INSTRUCTION_SIZE];
-int instruction_count = 0;
+// Array and counter for data memory
 int data_memory[DATA_SIZE] = {0};// Data memory initialized to zero
 int highest_address = 0;  // Track highest address used
 
