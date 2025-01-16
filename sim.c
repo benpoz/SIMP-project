@@ -139,6 +139,10 @@ int main(int argc, char *argv[]) {
         //execute line
         int halt = execute(current_instruction, data_memory, disk_in, hwregtrace, leds, disp7seg); 
         
+        //increment timers 
+        if (disk_timer_enable) {disk_timer++;} 
+        if (IOregisters[11]) {IOregisters[12]++;}
+        
         // check for irq0
         if (IOregisters[12] == IOregisters[13]) { // check if timercurrent == timermax
             IOregisters[12] = 0;
@@ -148,6 +152,7 @@ int main(int argc, char *argv[]) {
         if (disk_timer == 1024 && disk_timer_enable) {
             disk_timer = 0;
             disk_timer_enable = 0;
+            IOregisters[14] = 0;
             IOregisters[17] = 0;
             IOregisters[4] = 1; // turn on irqstatus1
         }
@@ -158,10 +163,6 @@ int main(int argc, char *argv[]) {
         } else {
             IOregisters[5] = 0; // reset irq2 if needed
         }
-        
-        //increment timers 
-        if (disk_timer_enable) {disk_timer++;} 
-        if (IOregisters[11]) {IOregisters[12]++;}
         
         //finish 
         if (!branch) {
@@ -304,10 +305,10 @@ int execute(struct instruction *ins, long long int *data_memory, long long int *
             registers[ins->Rd] = registers[ins->Rs] * registers[ins->Rt] + registers[ins->Rm];
             break;
         case 3: // and
-            registers[ins->Rd] = registers[ins->Rs] && registers[ins->Rt] && registers[ins->Rm];
+            registers[ins->Rd] = registers[ins->Rs] & registers[ins->Rt] & registers[ins->Rm];
             break;
         case 4: // or
-            registers[ins->Rd] = registers[ins->Rs] || registers[ins->Rt] || registers[ins->Rm];
+            registers[ins->Rd] = registers[ins->Rs] | registers[ins->Rt] | registers[ins->Rm];
             break;
         case 5: // xor
             registers[ins->Rd] = registers[ins->Rs] ^ registers[ins->Rt] ^ registers[ins->Rm];
