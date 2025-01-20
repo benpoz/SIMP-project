@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
         
         // exit if PC reached the end of imemin
         if (PC >= instruction_count) {
-            fprintf(cycles, "%d", CLK - 1); //write cycle number to file
+            fprintf(cycles, "%d", CLK + 1024 - disk_timer - 1); //write cycle number to file
             printf("Out of instrucions after %d cycles\n", CLK - 1);
             break;
         }
@@ -172,8 +172,8 @@ int main(int argc, char *argv[]) {
         CLK++;
         
         if (halt) {
-            fprintf(cycles, "%d", CLK); //write cycle number to file
-            printf("Halted after %d cycles\n", CLK);
+            fprintf(cycles, "%d", CLK + 1024 - disk_timer); //write cycle number to file
+            printf("Halted after %d cycles\n", CLK+ 1024 - disk_timer);
             break;
         }
     }
