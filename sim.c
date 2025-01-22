@@ -410,17 +410,17 @@ int execute(struct instruction *ins, long long int *data_memory, long long int *
                                 disk_in[128*sector + i] = data_memory[buffer + i]; // this is the DMA
                             }
                         }
-                    }
+                    } else {PC--;} // repeat command until disk is ready
                     break;
                 case 15: // check for disk readiness before updating disk sector
                     if (!IOregisters[17]) {
                         IOregisters[outreg] = registers[ins->Rm];
-                    }
+                    } else {PC--;} // repeat command until disk is ready
                     break;
                 case 16: // check for disk readiness before updating disk buffer
                     if (!IOregisters[17]) {
                         IOregisters[outreg] = registers[ins->Rm];
-                    }
+                    } else {PC--;} // repeat command until disk is ready
                     break;
                 case 22: // update pixel
                     int line = (IOregisters[20] >> 8) & 0xff; // bits 8-15 contains monitor line
