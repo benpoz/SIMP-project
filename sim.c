@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
         
         // exit if PC reached the end of imemin
         if (PC >= instruction_count) {
-            fprintf(cycles, "%d", CLK - 1); //write cycle number to file
+            fprintf(cycles, "%d", CLK + 1024 - disk_timer - 1); //write cycle number to file
             printf("Out of instrucions after %d cycles\n", CLK - 1);
             break;
         }
@@ -172,8 +172,8 @@ int main(int argc, char *argv[]) {
         CLK++;
         
         if (halt) {
-            fprintf(cycles, "%d", CLK); //write cycle number to file
-            printf("Halted after %d cycles\n", CLK);
+            fprintf(cycles, "%d", CLK + 1024 - disk_timer); //write cycle number to file
+            printf("Halted after %d cycles\n", CLK+ 1024 - disk_timer);
             break;
         }
     }
@@ -410,17 +410,17 @@ int execute(struct instruction *ins, long long int *data_memory, long long int *
                                 disk_in[128*sector + i] = data_memory[buffer + i]; // this is the DMA
                             }
                         }
-                    }
+                    } else {PC--;} // repeat command until disk is ready
                     break;
                 case 15: // check for disk readiness before updating disk sector
                     if (!IOregisters[17]) {
                         IOregisters[outreg] = registers[ins->Rm];
-                    }
+                    } else {PC--;} // repeat command until disk is ready
                     break;
                 case 16: // check for disk readiness before updating disk buffer
                     if (!IOregisters[17]) {
                         IOregisters[outreg] = registers[ins->Rm];
-                    }
+                    } else {PC--;} // repeat command until disk is ready
                     break;
                 case 22: // update pixel
                     int line = (IOregisters[20] >> 8) & 0xff; // bits 8-15 contains monitor line
