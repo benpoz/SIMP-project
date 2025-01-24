@@ -1,16 +1,5 @@
 # Calculate binomial coefficient
 
-##### Enable interrupts
-#out $zero, $zero, $imm2, $imm1, 1, 0  # Enable irq0
-#out $zero, $zero, $imm2, $imm1, 1, 1  # Enable irq1
-#out $zero, $zero, $imm2, $imm1, 1, 2  # Enable irq2
-#####
-
-##### Set interrupt handler
-#sll $sp, $imm1, $imm2, $zero, 1, 11  # Set $sp=1<<11=2048
-#out $zero, $imm1, $zero, $imm2, 6, irq_handler
-#####
-
 .word 0x100 15 #initialize n, k in data memory
 .word 0x101 8
 
@@ -52,18 +41,3 @@ lw $s0, $sp, $imm2, $zero, 0, 3
 EXIT:
 add $sp, $sp, $imm2, $zero, 0, 4		    # pop 4 items from stack
 beq $zero, $zero, $zero, $ra, 0, 0		    # return
-
-#####
-#irq_handler:
-    # Handle interrupts
-    #in $t1, $zero, $imm2, $zero, 0, 3  # Read irq0status
-    #in $t2, $zero, $imm2, $zero, 0, 4  # Read irq1status
-    #in $t3, $zero, $imm2, $zero, 0, 5  # Read irq2status
-
-    # Clear interrupt statuses
-    #out $zero, $zero, $imm2, $zero, 0, 3
-    #out $zero, $zero, $imm2, $zero, 0, 4
-    #out $zero, $zero, $imm2, $zero, 0, 5
-
-    #reti $zero, $zero, $zero, $zero, 0, 0
-#####   
