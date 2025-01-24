@@ -26,11 +26,11 @@ LOOP:
     sub $a0, $a0, $imm1, $zero, 1, 0            # n-1
     sub $a1, $a1, $imm1, $zero, 1, 0            # k-1
     jal $ra, $zero, $zero, $imm1, BIN, 0
-    add $s0, $v0, $imm2, $zero, 0, 0            # $s0 = binom(n-1, k)
+    add $s0, $v0, $imm2, $zero, 0, 0            # $s0 = binom(n-1, k-1)
     lw $a0, $sp, $imm2, $zero, 0, 1             # restore $a0 = n
     lw $a1, $sp, $imm2, $zero, 0, 0             # restore $a1 = k
     sub $a0, $a0, $imm1, $zero, 1, 0        
-    jal $ra, $zero, $zero, $imm1, BIN, 0
+    jal $ra, $zero, $zero, $imm1, BIN, 0        #calculate binom(n-1, k)
     add $v0, $v0, $s0, $zero, 0, 0
     lw $a1, $sp, $imm2, $zero, 0, 0
     lw $a0, $sp, $imm2, $zero, 0, 1
