@@ -64,9 +64,9 @@ int disk_timer_enable = 0;
 
 // declare functions
 long long int hexToNum(char number[], int bits); 
-int writeFileContentsIntoArray(char* input_file_name, char** array, int max_lines, int max_line_length);
+int writeFileContentsIntoArray(char* input_file_name, char** array, int max_lines);
 int writeIntegersIntoArray(char* input_file_name, int* array, int max_lines);
-long long int* createLongArrayFromFile (char* input_file_name, int max_lines, int max_line_length, int bits);
+long long int* createLongArrayFromFile (char* input_file_name, int max_lines, int bits);
 void decodeInstruction(long long int ins, struct instruction *curr);
 void setImmediates(struct instruction *ins);
 int countLinesToPrint(long long int *array, int max_size);
@@ -85,11 +85,12 @@ int main(int argc, char *argv[]) {
     } 
     
     //inputs
-    long long int* instruction_memory = createLongArrayFromFile(argv[1], MEMORY_SIZE, LINE_LENGTH, 48);
+    long long int* instruction_memory = createLongArrayFromFile(argv[1], MEMORY_SIZE, 48);
+
     // get the number of instructions so PC doesn't overflow
-    int instruction_count = countLinesToPrint(instruction_memory, MEMORY_SIZE);     
-    long long int* data_memory = createLongArrayFromFile(argv[2], MEMORY_SIZE, LINE_LENGTH, 32);
-    long long int* disk_in = createLongArrayFromFile(argv[3], DISK_SIZE, LINE_LENGTH, 32);
+    int instruction_count = countLinesToPrint(instruction_memory, MEMORY_SIZE); 
+    long long int* data_memory = createLongArrayFromFile(argv[2], MEMORY_SIZE, 32);
+    long long int* disk_in = createLongArrayFromFile(argv[3], DISK_SIZE, 32);
     //interrupt2
     int irq2_in[MEMORY_SIZE];
     int times_interrupted = writeIntegersIntoArray(argv[4], irq2_in, MEMORY_SIZE);
@@ -110,7 +111,7 @@ int main(int argc, char *argv[]) {
     while (1) { 
         
         // exit if PC reached the end of imemin
-        if (PC >= instruction_count) {
+        if (PC > instruction_count) {
             fprintf(cycles, "%d", CLK + 1024 - disk_timer - 1); //write cycle number to file
             printf("Out of instrucions after %d cycles\n", CLK - 1);
             break;
@@ -129,7 +130,6 @@ int main(int argc, char *argv[]) {
         struct instruction *current_instruction = malloc(sizeof(struct instruction));
         decodeInstruction(instruction_memory[PC], current_instruction);
         setImmediates(current_instruction);
-        free(current_instruction);
         
         //add line to trace file  
         fprintf(trace, "%03X %012llX ", PC, instruction_memory[PC]);
@@ -138,6 +138,7 @@ int main(int argc, char *argv[]) {
         
         //execute line
         int halt = execute(current_instruction, data_memory, disk_in, hwregtrace, leds, disp7seg); 
+        free(current_instruction);
         
         //increment timers 
         if (disk_timer_enable) {disk_timer++;} 
@@ -172,8 +173,14 @@ int main(int argc, char *argv[]) {
         CLK++;
         
         if (halt) {
-            fprintf(cycles, "%d", CLK + 1024 - disk_timer); //write cycle number to file
-            printf("Halted after %d cycles\n", CLK+ 1024 - disk_timer);
+            if (disk_timer_enable) {
+                fprintf(cycles, "%d", CLK + 1024 - disk_timer); //write cycle number to file
+                printf("Halted after %d cycles\n", CLK + 1024 - disk_timer);
+            }
+            else {
+                fprintf(cycles, "%d", CLK); //write cycle number to file
+                printf("Halted after %d cycles\n", CLK);
+            }
             break;
         }
     }
@@ -244,16 +251,16 @@ long long int hexToNum(char number[], int bits) {
     return res;
 }
 
-int writeFileContentsIntoArray(char* input_file_name, char** array, int max_lines, int max_line_length) {
+int writeFileContentsIntoArray(char* input_file_name, char** array, int max_lines) {
     FILE *file = fopen(input_file_name, "r");
     if (!file) {
         printf("Error opening file %s\n", input_file_name);
         return -1;
     }
     int line_count = 0;
-    char buffer[max_line_length + 1];
-    while (fgets(buffer, max_line_length + 1, file) != NULL && line_count < max_lines) {
-        array[line_count] = strdup(buffer); // Allocate memory and copy the line
+    char buffer[LINE_LENGTH + 1];
+    while (fgets(buffer, LINE_LENGTH + 1, file) != NULL && line_count < max_lines) {
+        array[line_count] = _strdup(buffer); // Allocate memory and copy the line
         line_count++;
     }
     printf("Loaded %d lines from %s\n", line_count, input_file_name);
@@ -375,65 +382,74 @@ int execute(struct instruction *ins, long long int *data_memory, long long int *
             PC = IOregisters[7];
             break;
         case 19: // in
+        {
             int inreg = registers[ins->Rs] + registers[ins->Rt];
             registers[ins->Rd] = IOregisters[inreg];
             fprintf(hwtrace, "%d READ %s %08X\n", CLK, IOregisters_names[inreg], registers[ins->Rd]); // print read command to files
             break;
+        }
         case 20: // out
+        {
             int outreg = registers[ins->Rs] + registers[ins->Rt];
             switch (outreg)
-                {
-                case 9:
-                    IOregisters[outreg] = registers[ins->Rm];
-                    fprintf(leds, "%d %08X\n", CLK,  IOregisters[outreg]);
-                    break;
-                case 10:
-                    IOregisters[outreg] = registers[ins->Rm];
-                    fprintf(disp7seg, "%d %08X\n", CLK,  IOregisters[outreg]);
-                    break;
-                case 14: // operate disk
-                    if (!IOregisters[17]) { // check disk status before operating
-                        IOregisters[17] = 1;
-                        IOregisters[14] = registers[ins->Rm];
-                        int sector = IOregisters[15];
-                        int buffer = IOregisters[16]; 
-                        
-                        if (IOregisters[14] == 1) { // read from disk
-                            disk_timer_enable = 1; // start counting disk operation time
-                            for (int i = 0; i < 128; i++) { // transfer 512 bytes fo data
-                                data_memory[buffer + i] = disk_in[128*sector + i]; // this is the DMA
-                            }
+            {
+            case 9:
+                IOregisters[outreg] = registers[ins->Rm];
+                fprintf(leds, "%d %08X\n", CLK, IOregisters[outreg]);
+                break;
+            case 10:
+                IOregisters[outreg] = registers[ins->Rm];
+                fprintf(disp7seg, "%d %08X\n", CLK, IOregisters[outreg]);
+                break;
+            case 14: // operate disk
+                if (!IOregisters[17]) { // check disk status before operating
+                    IOregisters[17] = 1;
+                    IOregisters[14] = registers[ins->Rm];
+                    int sector = IOregisters[15];
+                    int buffer = IOregisters[16];
+
+                    if (IOregisters[14] == 1) { // read from disk
+                        disk_timer_enable = 1; // start counting disk operation time
+                        for (int i = 0; i < 128; i++) { // transfer 512 bytes fo data
+                            data_memory[buffer + i] = disk_in[128 * sector + i]; // this is the DMA
                         }
-                        else if (IOregisters[14] == 2) { // write to disk
-                            disk_timer_enable = 1; // start counting disk operation time
-                            for (int i = 0; i < 128; i++) { // transfer 512 bytes fo data
-                                disk_in[128*sector + i] = data_memory[buffer + i]; // this is the DMA
-                            }
+                    }
+                    else if (IOregisters[14] == 2) { // write to disk
+                        disk_timer_enable = 1; // start counting disk operation time
+                        for (int i = 0; i < 128; i++) { // transfer 512 bytes fo data
+                            disk_in[128 * sector + i] = data_memory[buffer + i]; // this is the DMA
                         }
-                    } else {PC--;} // repeat command until disk is ready
-                    break;
-                case 15: // check for disk readiness before updating disk sector
-                    if (!IOregisters[17]) {
-                        IOregisters[outreg] = registers[ins->Rm];
-                    } else {PC--;} // repeat command until disk is ready
-                    break;
-                case 16: // check for disk readiness before updating disk buffer
-                    if (!IOregisters[17]) {
-                        IOregisters[outreg] = registers[ins->Rm];
-                    } else {PC--;} // repeat command until disk is ready
-                    break;
-                case 22: // update pixel
-                    int line = (IOregisters[20] >> 8) & 0xff; // bits 8-15 contains monitor line
-                    int column = IOregisters[20] & 0xff; // bits 0-7 contains monitor column
-                    monitor[line][column] = IOregisters[21]; // update correct pixel with monitordata
-                    break;
-                default:
+                    }
+                }
+                else { PC--; } // repeat command until disk is ready
+                break;
+            case 15: // check for disk readiness before updating disk sector
+                if (!IOregisters[17]) {
                     IOregisters[outreg] = registers[ins->Rm];
-                    break;
-                } 
+                }
+                else { PC--; } // repeat command until disk is ready
+                break;
+            case 16: // check for disk readiness before updating disk buffer
+                if (!IOregisters[17]) {
+                    IOregisters[outreg] = registers[ins->Rm];
+                }
+                else { PC--; } // repeat command until disk is ready
+                break;
+            case 22: // update pixel
+            {
+                int line = (IOregisters[20] >> 8) & 0xff; // bits 8-15 contains monitor line
+                int column = IOregisters[20] & 0xff; // bits 0-7 contains monitor column
+                monitor[line][column] = IOregisters[21]; // update correct pixel with monitordata
+                break;
+            }
+            default:
+                IOregisters[outreg] = registers[ins->Rm];
+                break;
+            }
             // print write command to files
             fprintf(hwtrace, "%d WRITE %s %08X\n", CLK, IOregisters_names[outreg], registers[ins->Rm]);
             break;
+        }
         case 21: // halt
             return 1; 
             break;
@@ -441,10 +457,26 @@ int execute(struct instruction *ins, long long int *data_memory, long long int *
     return 0;
 } 
 
-long long int* createLongArrayFromFile(char* input_file_name, int max_lines, int max_line_length, int bits) {
-    char* file_text[max_lines];
-    int line_count = writeFileContentsIntoArray(input_file_name, file_text, max_lines, max_line_length);
+long long int* createLongArrayFromFile(char* input_file_name, int max_lines, int bits) {
+    char** file_text = malloc(max_lines * sizeof(char*));
+
+    int line_count = writeFileContentsIntoArray(input_file_name, file_text, max_lines);
+    
+    if (line_count < 0) { // Handle file read errors
+        fprintf(stderr, "Error reading file: %s\n", input_file_name);
+        free(file_text);
+        return NULL; // Return NULL to indicate failure
+    }
+
     long long int* arr = malloc(max_lines * sizeof(long long int));
+
+    if (!arr) { // If allocation for arr fails
+        for (int i = 0; i < line_count; i++) {
+            free(file_text[i]);
+        }
+        free(file_text);
+        return NULL; // Indicate failure
+    }
 
     for (int i = 0; i < line_count; i++) {
         arr[i] = hexToNum(file_text[i], bits);
@@ -457,6 +489,13 @@ long long int* createLongArrayFromFile(char* input_file_name, int max_lines, int
     for (int i = line_count; i < max_lines; i++) { 
         arr[i] = 0; // pad zeros to fill max lines
     }
+    if (!arr) { // If allocation for arr fails
+    for (int i = 0; i < line_count; i++) {
+        free(file_text[i]);
+    }
+    free(file_text);
+    return NULL; // Indicate failure
+}
 
     return arr;
 }
