@@ -86,15 +86,17 @@ int main(int argc, char *argv[]) {
     
     //inputs
     long long int* instruction_memory = createLongArrayFromFile(argv[1], MEMORY_SIZE, 48);
+    long long int* data_memory = createLongArrayFromFile(argv[2], MEMORY_SIZE, 32);
+    long long int* disk_in = createLongArrayFromFile(argv[3], DISK_SIZE, 32);
 
     // get the number of instructions so PC doesn't overflow
     int instruction_count = countLinesToPrint(instruction_memory, MEMORY_SIZE); 
-    long long int* data_memory = createLongArrayFromFile(argv[2], MEMORY_SIZE, 32);
-    long long int* disk_in = createLongArrayFromFile(argv[3], DISK_SIZE, 32);
+    
     //interrupt2
     int irq2_in[MEMORY_SIZE];
     int times_interrupted = writeIntegersIntoArray(argv[4], irq2_in, MEMORY_SIZE);
     int* next_irq2 = irq2_in;
+    
     //outputs
     FILE* memory_out = fopen(argv[5], "w");
     FILE* reg_out = fopen(argv[6], "w");
