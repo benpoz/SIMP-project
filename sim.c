@@ -263,7 +263,6 @@ int writeFileContentsIntoArray(char* input_file_name, char** array, int max_line
         array[line_count] = _strdup(buffer); // Allocate memory and copy the line
         line_count++;
     }
-    printf("Loaded %d lines from %s\n", line_count, input_file_name);
     fclose(file);
     return line_count;
 }
@@ -470,14 +469,6 @@ long long int* createLongArrayFromFile(char* input_file_name, int max_lines, int
 
     long long int* arr = malloc(max_lines * sizeof(long long int));
 
-    if (!arr) { // If allocation for arr fails
-        for (int i = 0; i < line_count; i++) {
-            free(file_text[i]);
-        }
-        free(file_text);
-        return NULL; // Indicate failure
-    }
-
     for (int i = 0; i < line_count; i++) {
         arr[i] = hexToNum(file_text[i], bits);
     }
@@ -489,13 +480,6 @@ long long int* createLongArrayFromFile(char* input_file_name, int max_lines, int
     for (int i = line_count; i < max_lines; i++) { 
         arr[i] = 0; // pad zeros to fill max lines
     }
-    if (!arr) { // If allocation for arr fails
-    for (int i = 0; i < line_count; i++) {
-        free(file_text[i]);
-    }
-    free(file_text);
-    return NULL; // Indicate failure
-}
 
     return arr;
 }
