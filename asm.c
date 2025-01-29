@@ -1,3 +1,5 @@
+#pragma warning(disable : 4996) // disable C4996 warning so strtok etc. work
+
 // Required header files for the assembler
 #include <stdio.h>
 #include <stdlib.h>
